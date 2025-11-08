@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 # ==================== 配置 ====================
-# 容器内监听端口（从环境变量读取）
-INTERNAL_PORT=${PORT:-8443}
-# 公网访问端口（从环境变量获取）
+# 容器内监听端口（从环境变量读取，默认 80）
+INTERNAL_PORT=${PORT:-80}
+# 公网访问端口（从环境变量获取，默认等于内部端口）
 EXTERNAL_PORT=${EXTERNAL_PORT:-${INTERNAL_PORT}}
 # 公网访问地址（从环境变量获取）
 PUBLIC_HOST=${PUBLIC_HOST:-""}
@@ -12,7 +12,7 @@ UUID=${VMESS_UUID:-$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen)}
 V=1.8.24
 
 echo "=========================================="
-echo "🚀 VMess Server Starting (mKCP/UDP)"
+echo "🚀 VMess Server Starting"
 echo "=========================================="
 echo "📌 Internal Port (Container): $INTERNAL_PORT"
 echo "📌 External Port (Public): $EXTERNAL_PORT"
@@ -36,7 +36,7 @@ if [ ! -f xray ]; then
     echo "✅ Xray installed"
 fi
 
-# ==================== 生成 Xray 配置 (mKCP/UDP) ====================
+# ==================== 生成 Xray 配置 ====================
 cat > c.json << EOF
 {
   "log": {"loglevel": "none"},
@@ -49,36 +49,44 @@ cat > c.json << EOF
         "clients": [{"id": "${UUID}", "alterId": 0}]
       },
       "streamSettings": {
-        "network": "mkcp",
-        "kcpSettings": {
-          "uplinkCapacity": 100,
-          "downlinkCapacity": 100,
-          "congestion": true,
+        "network": "tcp",
+        "tcpSettings": {
+          "acceptProxyProtocol": false,
           "header": {
-            "type": "none"
+            "type": "http",
+            "response": {
+              "version": "1.1",
+              "status": "200",
+              "reason": "OK",
+              "headers": {
+                "Content-Type": ["text/html; charset=utf-8"],
+                "Transfer-Encoding": ["chunked"],
+                "Connection": ["keep-alive"],
+                "Pragma": "no-cache"
+              }
+            }
           }
         }
       },
-      "tag": "vmess-kcp"
+      "tag": "vmess"
     }
   ],
   "outbounds": [{"protocol": "freedom"}]
 }
 EOF
 
-# ==================== 生成 VMess 链接 (mKCP) ====================
-# VMess 链接使用公网端口和地址，传输协议为 kcp
-L="vmess://$(echo -n "{\"v\":\"2\",\"ps\":\"ClawCloud-VMess-KCP\",\"add\":\"$PUBLIC_HOST\",\"port\":\"$EXTERNAL_PORT\",\"id\":\"$UUID\",\"aid\":\"0\",\"net\":\"kcp\",\"type\":\"none\",\"tls\":\"\"}"|base64 -w 0)"
+# ==================== 生成 VMess 链接 ====================
+# VMess 链接使用公网端口和地址
+L="vmess://$(echo -n "{\"v\":\"2\",\"ps\":\"ClawCloud-VMess\",\"add\":\"$PUBLIC_HOST\",\"port\":\"$EXTERNAL_PORT\",\"id\":\"$UUID\",\"aid\":\"0\",\"net\":\"tcp\",\"type\":\"http\",\"tls\":\"\"}"|base64 -w 0)"
 echo "$L" > link.txt
 
 echo ""
 echo "=========================================="
-echo "🎉 VMess Server Ready! (mKCP/UDP)"
+echo "🎉 VMess Server Ready!"
 echo "=========================================="
-echo "📍 Container listens on: 0.0.0.0:$INTERNAL_PORT (UDP)"
-echo "📍 Public access: $PUBLIC_HOST:$EXTERNAL_PORT (UDP)"
+echo "📍 Container listens on: 0.0.0.0:$INTERNAL_PORT"
+echo "📍 Public access: $PUBLIC_HOST:$EXTERNAL_PORT"
 echo "🔑 UUID: $UUID"
-echo "📡 Transport: mKCP (UDP-based)"
 echo ""
 echo "🔗 VMess Link:"
 echo "$L"
@@ -86,7 +94,8 @@ echo ""
 echo "💾 Link saved to: link.txt"
 echo "=========================================="
 echo ""
-echo "🚀 Starting Xray on port $INTERNAL_PORT (UDP/mKCP)..."
+echo "🚀 Starting Xray on port $INTERNAL_PORT..."
 echo ""
 
 exec ./xray run -c c.json
+```
