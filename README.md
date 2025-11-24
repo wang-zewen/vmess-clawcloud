@@ -132,19 +132,16 @@ docker build -t vmess-server:java .
 docker run -p 80:80 -e EXTERNAL_PORT=12345 vmess-server:java
 ```
 
-## 🏷️ 创建Release
+## 🤖 自动发布
 
-如果你是项目维护者，想要创建新的Release版本：
+本项目使用GitHub Actions**完全自动化**发布：
 
-```bash
-# 创建tag
-git tag v1.0.0
+- ✅ 每次push到main/master分支时，自动创建GitHub Release
+- ✅ 自动构建JAR文件并附加到Release
+- ✅ 自动构建并推送Docker镜像
+- ✅ 无需手动操作，开箱即用
 
-# 推送tag到远程，会自动触发release构建
-git push origin v1.0.0
-```
-
-详细说明请查看：[如何创建Release](.github/HOW_TO_RELEASE.md)
+详细说明请查看：[自动发布说明](.github/HOW_TO_RELEASE.md)
 
 ## 📂 项目结构
 

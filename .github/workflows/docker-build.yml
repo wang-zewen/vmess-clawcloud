@@ -54,6 +54,62 @@ jobs:
             java-version/target/vmess-server-*.jar
           retention-days: 90
 
+      - name: Create or Update Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.0-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}
+          name: VMess Server v1.0.0-${{ steps.version.outputs.date }}
+          body: |
+            ## 🎉 VMess Server Java JAR 自动发布
+
+            这是从 `${{ github.ref_name }}` 分支自动构建的版本。
+
+            ### 📦 下载文件
+            - **vmess-server.jar** - 可执行JAR文件（推荐下载）
+            - **vmess-server-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}.jar** - 带版本号的JAR文件
+
+            ### 🚀 使用方法
+
+            下载JAR文件后，直接运行：
+            ```bash
+            java -jar vmess-server.jar
+            ```
+
+            使用环境变量配置：
+            ```bash
+            export PORT=80
+            export EXTERNAL_PORT=12345
+            export VMESS_UUID=your-uuid-here
+            export PUBLIC_HOST=your-domain.com
+            java -jar vmess-server.jar
+            ```
+
+            ### 📝 版本信息
+            - **构建日期**: ${{ steps.version.outputs.date }}
+            - **提交**: ${{ github.sha }}
+            - **提交哈希**: ${{ steps.version.outputs.sha_short }}
+            - **分支**: ${{ github.ref_name }}
+
+            ### 📋 环境要求
+            - Java 11 或更高版本
+            - Linux系统（需要运行Xray）
+
+            ### 🐳 Docker镜像
+            如果不想使用JAR文件，也可以直接使用Docker镜像：
+            - **Bash版本**: `ghcr.io/wang-zewen/vmess-clawcloud:latest`
+            - **Java版本**: `ghcr.io/wang-zewen/vmess-clawcloud:java`
+
+            ---
+
+            > 此版本由GitHub Actions自动构建和发布
+          files: |
+            java-version/target/vmess-server.jar
+            java-version/target/vmess-server-*.jar
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
   # 构建Bash脚本版本
   build-and-push-bash:
     runs-on: ubuntu-latest
