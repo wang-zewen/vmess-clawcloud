@@ -26,7 +26,7 @@ WORKDIR /app
 COPY --from=builder /build/target/vmess-server.jar .
 
 # 暴露端口
-EXPOSE 80
+EXPOSE 25727
 
 # 运行应用
 CMD ["java", "-jar", "vmess-server.jar"]
