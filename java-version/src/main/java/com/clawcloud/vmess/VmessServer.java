@@ -48,7 +48,8 @@ public class VmessServer {
         this.externalPort = extPortEnv != null ? Integer.parseInt(extPortEnv) : this.internalPort;
 
         String uuidEnv = System.getenv("VMESS_UUID");
-        this.uuid = uuidEnv != null ? uuidEnv : UUID.randomUUID().toString();
+        // 默认 UUID，也可以通过环境变量 VMESS_UUID 覆盖
+        this.uuid = uuidEnv != null ? uuidEnv : "b752ce97-f1eb-4a58-bdb3-96dd11a72d4d";
 
         System.out.println("📌 Internal Port (Container): " + internalPort);
         System.out.println("📌 External Port (Public): " + externalPort);
