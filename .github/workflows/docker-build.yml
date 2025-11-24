@@ -12,7 +12,106 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push:
+  # 构建Java JAR文件
+  build-jar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build JAR with Maven
+        working-directory: ./java-version
+        run: mvn clean package -DskipTests
+
+      - name: Get version info
+        id: version
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      - name: Rename JAR file
+        run: |
+          cd java-version/target
+          cp vmess-server.jar vmess-server-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}.jar
+
+      - name: Upload JAR as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vmess-server-jar-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}
+          path: |
+            java-version/target/vmess-server.jar
+            java-version/target/vmess-server-*.jar
+          retention-days: 90
+
+      - name: Create or Update Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.0-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}
+          name: VMess Server v1.0.0-${{ steps.version.outputs.date }}
+          body: |
+            ## 🎉 VMess Server Java JAR 自动发布
+
+            这是从 `${{ github.ref_name }}` 分支自动构建的版本。
+
+            ### 📦 下载文件
+            - **vmess-server.jar** - 可执行JAR文件（推荐下载）
+            - **vmess-server-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}.jar** - 带版本号的JAR文件
+
+            ### 🚀 使用方法
+
+            下载JAR文件后，直接运行：
+            ```bash
+            java -jar vmess-server.jar
+            ```
+
+            使用环境变量配置：
+            ```bash
+            export PORT=80
+            export EXTERNAL_PORT=12345
+            export VMESS_UUID=your-uuid-here
+            export PUBLIC_HOST=your-domain.com
+            java -jar vmess-server.jar
+            ```
+
+            ### 📝 版本信息
+            - **构建日期**: ${{ steps.version.outputs.date }}
+            - **提交**: ${{ github.sha }}
+            - **提交哈希**: ${{ steps.version.outputs.sha_short }}
+            - **分支**: ${{ github.ref_name }}
+
+            ### 📋 环境要求
+            - Java 11 或更高版本
+            - Linux系统（需要运行Xray）
+
+            ### 🐳 Docker镜像
+            如果不想使用JAR文件，也可以直接使用Docker镜像：
+            - **Bash版本**: `ghcr.io/wang-zewen/vmess-clawcloud:latest`
+            - **Java版本**: `ghcr.io/wang-zewen/vmess-clawcloud:java`
+
+            ---
+
+            > 此版本由GitHub Actions自动构建和发布
+          files: |
+            java-version/target/vmess-server.jar
+            java-version/target/vmess-server-*.jar
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+  # 构建Bash脚本版本
+  build-and-push-bash:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,19 +128,57 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
+      - name: Extract metadata (Bash version)
+        id: meta-bash
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
-            type=sha,prefix={{branch}}-
+            type=raw,value=bash
+            type=sha,prefix=bash-
 
-      - name: Build and push Docker image
+      - name: Build and push Bash version Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-bash.outputs.tags }}
+          labels: ${{ steps.meta-bash.outputs.labels }}
+
+  # 构建Java JAR版本
+  build-and-push-java:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (Java version)
+        id: meta-java
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=java
+            type=sha,prefix=java-
+
+      - name: Build and push Java version Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./java-version
+          file: ./java-version/Dockerfile
+          push: true
+          tags: ${{ steps.meta-java.outputs.tags }}
+          labels: ${{ steps.meta-java.outputs.labels }}

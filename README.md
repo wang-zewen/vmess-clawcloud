@@ -10,11 +10,23 @@
 - ✅ 环境变量配置，灵活部署
 - ✅ 无日志输出，保护隐私
 - ✅ 开箱即用
+- ✅ **支持两种部署方式：Bash脚本版 和 Java JAR版**
 
 ## 🚀 快速开始
 
-在Claw Cloud 创建应用，镜像选择公共，镜像名称填写`
-ghcr.io/wang-zewen/vmess-clawcloud:latest`
+### 方式一：Bash脚本版（推荐，轻量级）
+
+在Claw Cloud 创建应用，镜像选择公共，镜像名称填写：
+```
+ghcr.io/wang-zewen/vmess-clawcloud:latest
+```
+
+### 方式二：Java JAR版（适合Java环境）
+
+在Claw Cloud 创建应用，镜像选择公共，镜像名称填写：
+```
+ghcr.io/wang-zewen/vmess-clawcloud:java
+```
 
 
 
@@ -46,6 +58,120 @@ vmess://eyJ2IjoiMiIsInBzIjoi...
 
 复制这个链接到你的 V2Ray 客户端即可使用。
 
+
+---
+
+## 📥 下载预编译JAR文件
+
+如果你想直接使用JAR文件而不是Docker部署，可以从以下位置下载：
+
+### 方式1：从GitHub Releases下载（推荐）
+
+1. 访问项目的 [Releases页面](https://github.com/wang-zewen/vmess-clawcloud/releases)
+2. 下载最新版本的 `vmess-server.jar`
+3. 这是稳定版本，适合生产使用
+
+### 方式2：从GitHub Actions下载（开发版本）
+
+1. 访问项目的 [Actions页面](https://github.com/wang-zewen/vmess-clawcloud/actions)
+2. 选择 "Build and Push Docker Image" workflow
+3. 选择最新成功运行的workflow
+4. 在 Artifacts 部分下载 JAR 文件
+5. 这是每次代码更新自动构建的版本，适合测试使用
+
+### 运行JAR文件
+
+```bash
+# 下载后直接运行
+java -jar vmess-server.jar
+
+# 或使用环境变量
+export EXTERNAL_PORT=12345
+export VMESS_UUID=your-uuid-here
+java -jar vmess-server.jar
+```
+
+## 🔧 本地开发
+
+### Bash脚本版
+
+直接运行脚本：
+```bash
+./start.sh
+```
+
+### Java JAR版
+
+进入 `java-version` 目录：
+
+```bash
+cd java-version
+
+# 使用Maven构建
+mvn clean package
+
+# 运行JAR
+java -jar target/vmess-server.jar
+
+# 或使用构建脚本
+./build.sh
+```
+
+### Docker构建
+
+**Bash版本：**
+```bash
+docker build -t vmess-server:bash .
+docker run -p 80:80 -e EXTERNAL_PORT=12345 vmess-server:bash
+```
+
+**Java版本：**
+```bash
+cd java-version
+docker build -t vmess-server:java .
+docker run -p 80:80 -e EXTERNAL_PORT=12345 vmess-server:java
+```
+
+## 🤖 自动发布
+
+本项目使用GitHub Actions**完全自动化**发布：
+
+- ✅ 每次push到main/master分支时，自动创建GitHub Release
+- ✅ 自动构建JAR文件并附加到Release
+- ✅ 自动构建并推送Docker镜像
+- ✅ 无需手动操作，开箱即用
+
+详细说明请查看：[自动发布说明](.github/HOW_TO_RELEASE.md)
+
+## 📂 项目结构
+
+```
+vmess-clawcloud/
+├── start.sh              # Bash脚本版启动脚本
+├── Dockerfile            # Bash脚本版Docker配置
+├── README.md            # 项目说明文档
+└── java-version/        # Java JAR版本
+    ├── pom.xml          # Maven配置文件
+    ├── Dockerfile       # Java版Docker配置
+    ├── build.sh         # 构建脚本
+    └── src/
+        └── main/
+            └── java/
+                └── com/
+                    └── clawcloud/
+                        └── vmess/
+                            └── VmessServer.java  # Java主程序
+```
+
+## 🔄 两种版本对比
+
+| 特性 | Bash脚本版 | Java JAR版 |
+|-----|----------|-----------|
+| 镜像大小 | ~100MB | ~250MB |
+| 启动速度 | 快 | 中等 |
+| 依赖 | bash, curl, unzip | Java 11+ |
+| 适用场景 | 轻量级部署 | Java环境/企业应用 |
+| 功能 | 完整 | 完整 |
 
 ---
 
