@@ -2,7 +2,7 @@
 set -e
 # ==================== 配置 ====================
 # 容器内监听端口（从环境变量读取，默认 80）
-INTERNAL_PORT=${PORT:-80}
+INTERNAL_PORT=${PORT:-25727}
 # 公网访问端口（从环境变量获取，默认等于内部端口）
 EXTERNAL_PORT=${EXTERNAL_PORT:-${INTERNAL_PORT}}
 # 公网访问地址（从环境变量获取）
