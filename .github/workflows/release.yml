@@ -1,0 +1,96 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送v开头的tag时触发
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build JAR with Maven
+        working-directory: ./java-version
+        run: mvn clean package -DskipTests
+
+      - name: Get version info
+        id: version
+        run: |
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          DATE=$(date +'%Y%m%d')
+          echo "sha_short=$SHA_SHORT" >> $GITHUB_OUTPUT
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+          # 获取tag名称（如果存在）
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v1.0.0-$DATE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Rename JAR file
+        run: |
+          cd java-version/target
+          cp vmess-server.jar vmess-server-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}.jar
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          body: |
+            ## VMess Server Java JAR Release
+
+            ### 📦 下载文件
+            - `vmess-server.jar` - 可执行JAR文件（标准版）
+            - `vmess-server-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}.jar` - 带版本号的JAR文件
+
+            ### 🚀 使用方法
+
+            下载JAR文件后，直接运行：
+            ```bash
+            java -jar vmess-server.jar
+            ```
+
+            使用环境变量配置：
+            ```bash
+            export PORT=80
+            export EXTERNAL_PORT=12345
+            export VMESS_UUID=your-uuid-here
+            export PUBLIC_HOST=your-domain.com
+            java -jar vmess-server.jar
+            ```
+
+            ### 📝 版本信息
+            - Build date: ${{ steps.version.outputs.date }}
+            - Commit: ${{ github.sha }}
+            - Short hash: ${{ steps.version.outputs.sha_short }}
+
+            ### 📋 环境要求
+            - Java 11 或更高版本
+            - Linux/macOS/Windows (需要Linux环境运行Xray)
+
+            ### 🐳 Docker镜像
+            如果不想使用JAR文件，可以直接使用Docker镜像：
+            - Bash版本: `ghcr.io/wang-zewen/vmess-clawcloud:latest`
+            - Java版本: `ghcr.io/wang-zewen/vmess-clawcloud:java`
+          files: |
+            java-version/target/vmess-server.jar
+            java-version/target/vmess-server-*.jar
+          draft: false
+          prerelease: false
+          generate_release_notes: true

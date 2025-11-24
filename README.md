@@ -65,16 +65,19 @@ vmess://eyJ2IjoiMiIsInBzIjoi...
 
 如果你想直接使用JAR文件而不是Docker部署，可以从以下位置下载：
 
-### 方式1：从GitHub Actions下载
-
-1. 访问项目的 [Actions页面](https://github.com/wang-zewen/vmess-clawcloud/actions)
-2. 选择最新的成功运行的workflow
-3. 在 Artifacts 部分下载 `vmess-server-jar`
-
-### 方式2：从GitHub Releases下载（主分支）
+### 方式1：从GitHub Releases下载（推荐）
 
 1. 访问项目的 [Releases页面](https://github.com/wang-zewen/vmess-clawcloud/releases)
 2. 下载最新版本的 `vmess-server.jar`
+3. 这是稳定版本，适合生产使用
+
+### 方式2：从GitHub Actions下载（开发版本）
+
+1. 访问项目的 [Actions页面](https://github.com/wang-zewen/vmess-clawcloud/actions)
+2. 选择 "Build and Push Docker Image" workflow
+3. 选择最新成功运行的workflow
+4. 在 Artifacts 部分下载 JAR 文件
+5. 这是每次代码更新自动构建的版本，适合测试使用
 
 ### 运行JAR文件
 
@@ -128,6 +131,20 @@ cd java-version
 docker build -t vmess-server:java .
 docker run -p 80:80 -e EXTERNAL_PORT=12345 vmess-server:java
 ```
+
+## 🏷️ 创建Release
+
+如果你是项目维护者，想要创建新的Release版本：
+
+```bash
+# 创建tag
+git tag v1.0.0
+
+# 推送tag到远程，会自动触发release构建
+git push origin v1.0.0
+```
+
+详细说明请查看：[如何创建Release](.github/HOW_TO_RELEASE.md)
 
 ## 📂 项目结构
 

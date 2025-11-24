@@ -48,37 +48,11 @@ jobs:
       - name: Upload JAR as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vmess-server-jar
+          name: vmess-server-jar-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}
           path: |
             java-version/target/vmess-server.jar
             java-version/target/vmess-server-*.jar
           retention-days: 90
-
-      - name: Create Release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v1.0.0-${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha_short }}
-          name: Release v1.0.0-${{ steps.version.outputs.date }}
-          body: |
-            ## VMess Server Java JAR Release
-
-            ### 📦 下载
-            - `vmess-server.jar` - 可执行JAR文件
-
-            ### 🚀 使用方法
-            ```bash
-            java -jar vmess-server.jar
-            ```
-
-            ### 📝 更新内容
-            - Build date: ${{ steps.version.outputs.date }}
-            - Commit: ${{ github.sha }}
-          files: |
-            java-version/target/vmess-server.jar
-            java-version/target/vmess-server-*.jar
-          draft: false
-          prerelease: false
 
   # 构建Bash脚本版本
   build-and-push-bash:
