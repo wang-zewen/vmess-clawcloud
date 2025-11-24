@@ -12,7 +12,8 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push:
+  # 构建Bash脚本版本
+  build-and-push-bash:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,19 +30,57 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
+      - name: Extract metadata (Bash version)
+        id: meta-bash
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
-            type=sha,prefix={{branch}}-
+            type=raw,value=bash
+            type=sha,prefix=bash-
 
-      - name: Build and push Docker image
+      - name: Build and push Bash version Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-bash.outputs.tags }}
+          labels: ${{ steps.meta-bash.outputs.labels }}
+
+  # 构建Java JAR版本
+  build-and-push-java:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (Java version)
+        id: meta-java
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=java
+            type=sha,prefix=java-
+
+      - name: Build and push Java version Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./java-version
+          file: ./java-version/Dockerfile
+          push: true
+          tags: ${{ steps.meta-java.outputs.tags }}
+          labels: ${{ steps.meta-java.outputs.labels }}
