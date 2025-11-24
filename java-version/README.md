@@ -10,7 +10,24 @@
 - ✅ 生成可执行JAR文件
 - ✅ 支持Docker容器化部署
 
+## 📥 下载预编译JAR
+
+无需本地构建，可以直接从GitHub获取预编译的JAR文件：
+
+### 从GitHub Actions下载
+
+1. 访问 [Actions页面](https://github.com/wang-zewen/vmess-clawcloud/actions)
+2. 选择最新成功的workflow运行
+3. 下载 `vmess-server-jar` artifact
+
+### 从GitHub Releases下载
+
+1. 访问 [Releases页面](https://github.com/wang-zewen/vmess-clawcloud/releases)
+2. 下载最新版本的 `vmess-server.jar`
+
 ## 🔨 构建
+
+如果需要本地构建：
 
 ### 前置要求
 

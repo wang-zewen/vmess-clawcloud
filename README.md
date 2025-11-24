@@ -61,6 +61,33 @@ vmess://eyJ2IjoiMiIsInBzIjoi...
 
 ---
 
+## 📥 下载预编译JAR文件
+
+如果你想直接使用JAR文件而不是Docker部署，可以从以下位置下载：
+
+### 方式1：从GitHub Actions下载
+
+1. 访问项目的 [Actions页面](https://github.com/wang-zewen/vmess-clawcloud/actions)
+2. 选择最新的成功运行的workflow
+3. 在 Artifacts 部分下载 `vmess-server-jar`
+
+### 方式2：从GitHub Releases下载（主分支）
+
+1. 访问项目的 [Releases页面](https://github.com/wang-zewen/vmess-clawcloud/releases)
+2. 下载最新版本的 `vmess-server.jar`
+
+### 运行JAR文件
+
+```bash
+# 下载后直接运行
+java -jar vmess-server.jar
+
+# 或使用环境变量
+export EXTERNAL_PORT=12345
+export VMESS_UUID=your-uuid-here
+java -jar vmess-server.jar
+```
+
 ## 🔧 本地开发
 
 ### Bash脚本版
