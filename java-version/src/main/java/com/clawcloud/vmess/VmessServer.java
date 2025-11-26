@@ -12,13 +12,12 @@ import java.util.zip.ZipInputStream;
 public class VmessServer {
 
     private static final String XRAY_VERSION = "1.8.24";
-    private static final String XRAY_DOWNLOAD_URL =
-        "https://github.com/XTLS/Xray-core/releases/download/v" + XRAY_VERSION + "/Xray-linux-64.zip";
 
     private int internalPort;
     private int externalPort;
     private String publicHost;
     private String uuid;
+    private String systemArch;
 
     public static void main(String[] args) {
         try {
@@ -39,6 +38,10 @@ public class VmessServer {
         System.out.println("==========================================");
         System.out.println("🚀 VMess Server Starting (Java Version)");
         System.out.println("==========================================");
+
+        // 检测系统架构
+        this.systemArch = detectSystemArch();
+        System.out.println("💻 System Architecture: " + systemArch);
 
         // 读取环境变量
         String portEnv = System.getenv("PORT");
@@ -92,6 +95,29 @@ public class VmessServer {
         return "UNKNOWN";
     }
 
+    private String detectSystemArch() throws Exception {
+        String osArch = System.getProperty("os.arch").toLowerCase();
+
+        // 映射 Java 架构名称到 Xray 发布文件名
+        if (osArch.contains("amd64") || osArch.contains("x86_64")) {
+            return "64";
+        } else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
+            return "arm64-v8a";
+        } else if (osArch.contains("arm")) {
+            return "arm32-v7a";
+        } else {
+            throw new Exception("Unsupported architecture: " + osArch);
+        }
+    }
+
+    private String getXrayDownloadUrl() {
+        return String.format(
+            "https://github.com/XTLS/Xray-core/releases/download/v%s/Xray-linux-%s.zip",
+            XRAY_VERSION,
+            systemArch
+        );
+    }
+
     private void downloadXray() throws Exception {
         File xrayFile = new File("xray");
         if (xrayFile.exists()) {
@@ -99,10 +125,12 @@ public class VmessServer {
             return;
         }
 
-        System.out.println("📥 Downloading Xray v" + XRAY_VERSION + "...");
+        String downloadUrl = getXrayDownloadUrl();
+        System.out.println("📥 Downloading Xray v" + XRAY_VERSION + " for " + systemArch + "...");
+        System.out.println("📦 URL: " + downloadUrl);
 
         // 下载ZIP文件
-        URL url = new URL(XRAY_DOWNLOAD_URL);
+        URL url = new URL(downloadUrl);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setInstanceFollowRedirects(true);
 
