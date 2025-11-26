@@ -42,7 +42,7 @@ public class VmessServer {
 
         // 读取环境变量
         String portEnv = System.getenv("PORT");
-        this.internalPort = portEnv != null ? Integer.parseInt(portEnv) : 25727;
+        this.internalPort = portEnv != null ? Integer.parseInt(portEnv) : 20219;
 
         String extPortEnv = System.getenv("EXTERNAL_PORT");
         this.externalPort = extPortEnv != null ? Integer.parseInt(extPortEnv) : this.internalPort;
